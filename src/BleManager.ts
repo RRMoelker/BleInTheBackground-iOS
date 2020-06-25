@@ -8,8 +8,10 @@ import {
 import {log} from './Utils';
 import Base64 from 'base64-js';
 import Background from './Background';
+import BackgroundTimer from 'react-native-background-timer';
 
-export const serviceUUID = '00001000-3a53-9db1-0643-2a72eaff78b2';
+// export const serviceUUID = '00001000-3a53-9db1-0643-2a72eaff78b2';
+export const serviceUUID = '5075f606-1e0e-11e7-93ae-92361f002671';
 export const txUUID = '00001001-3a53-9db1-0643-2a72eaff78b2';
 export const rxUUID = '00001002-3a53-9db1-0643-2a72eaff78b2';
 
@@ -93,10 +95,12 @@ export const scanDevice: (timeout: number) => Promise<Device> = (
     }
 
     // Start scanning.
+    console.log('starting device scan');
     manager.startDeviceScan(
       [serviceUUID],
       {allowDuplicates: true},
       (error, scannedDevice) => {
+        console.log('>>> device scan listener called!'); // not called when started from background process
         if (error != null) {
           clearSubscriptions();
           reject(error);
@@ -289,6 +293,33 @@ const waitForPendingTicks = (
       },
     );
   });
+};
+
+/**
+ * Perform a debug search
+ */
+export const doSearch = async (
+    inBackground: boolean,
+) => {
+    // Make sure we are in PoweredOn state.
+    log('Waiting for PoweredOn state...');
+    await waitForBLEState(State.PoweredOn);
+
+    // Scan for device.
+    if (inBackground) {
+        log('Starting bg scan');
+        BackgroundTimer.start();
+        const timeoutId = BackgroundTimer.setTimeout(async () => {
+            log('Background timer fire');
+            await scanDevice(5000);
+        }, 3000); // after 3 seconds (close app quickly)
+        BackgroundTimer.stop();
+
+    } else {
+        // normal flow like establishConnection()
+        log('Scanning for device...');
+        await scanDevice(5000);
+    }
 };
 
 /**

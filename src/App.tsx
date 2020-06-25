@@ -11,10 +11,10 @@ import {
   AppStateStatus,
 } from 'react-native';
 import {
-  establishConnection,
-  cancelAllConnections,
-  executeJob,
-  scheduleBackgroundProcessingTask,
+    establishConnection,
+    cancelAllConnections,
+    executeJob,
+    scheduleBackgroundProcessingTask, doSearch,
 } from './BleManager';
 import {
   addLogListener,
@@ -95,26 +95,37 @@ const App: () => ReactElement = () => {
     <SafeAreaView style={styles.mainView}>
       <View style={styles.header}>
         <Button
-          title={'Connect'}
+          title={'Scan FG'}
           disabled={device != null || connecting}
           onPress={() => {
             setConnecting(true);
-            establishConnection(() => {
-              setDevice(null);
-              setExecuting(false);
+            doSearch()
+            .then(() => {
+              setConnecting(false);
             })
-              .then(connectedDevice => {
-                setDevice(connectedDevice);
-                setConnecting(false);
-              })
-              .catch(error => {
-                log(`Failed to connect: ${error.message}`);
-                setDevice(null);
-                setExecuting(false);
-                setConnecting(false);
+            .catch(error => {
+              log(`Failed to connect: ${error.message}`);
+              setConnecting(false);
               });
           }}
         />
+
+        <Button
+          title={'Scan BG'}
+          disabled={device != null || connecting}
+          onPress={() => {
+            setConnecting(true);
+            doSearch(true)
+            .then(() => {
+              setConnecting(false);
+            })
+            .catch(error => {
+              log(`Failed to connect: ${error.message}`);
+              setConnecting(false);
+              });
+          }}
+        />
+
         <Button
           title={'Disconnect'}
           disabled={device == null}
@@ -133,35 +144,7 @@ const App: () => ReactElement = () => {
             }
           }}
         />
-        <Button
-          title={'Execute'}
-          disabled={device == null || executing}
-          onPress={() => {
-            if (device != null) {
-              setExecuting(true);
-              executeJob(device)
-                .then(() => {
-                  setExecuting(false);
-                })
-                .catch(error => {
-                  log(`Failed to execute: ${error.message}`);
-                  setExecuting(false);
-                });
-            }
-          }}
-        />
-        <Button
-          title={'Schedule'}
-          onPress={() => {
-            scheduleBackgroundProcessingTask()
-              .then(() => {
-                log('Schedule registered');
-              })
-              .catch(error => {
-                log(`Schedule failed with error: ${error.message}`);
-              });
-          }}
-        />
+
         <Button
           title={'Clear'}
           onPress={() => {
