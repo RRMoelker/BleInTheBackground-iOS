@@ -1,3 +1,5 @@
+**This fork is to demonstrate a bug.**
+
 # BleInTheBackground - for iOS
 
 This project demonstrates usage of React Native's `react-native-ble-plx` library with iOS background capabilities.
